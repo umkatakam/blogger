@@ -1,4 +1,11 @@
+let fs = require('fs')
 let isLoggedIn = require('./middleware/isLoggedIn')
+let DataUri = require('datauri')
+let multiparty = require('multiparty')
+let then = require('express-then')
+let Post = require('./models/post')
+
+require('songbird')
 
 module.exports = (app) => {
 	let passport = app.passport
@@ -22,9 +29,54 @@ module.exports = (app) => {
 	}))
 
 	app.get('/profile', isLoggedIn, (req, res) => {	
-		req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000
 		res.render('profile.ejs', {user: req.user})	
 	})
+
+	app.get('/post/:postId?', then (async (req, res) => {
+		let postId = req.params.postId		
+		if(!postId) {
+			res.render('post.ejs', {
+				post: {}, 
+				verb: 'Create'				
+			})
+			return
+		}
+
+		let post = await Post.promise.findById(postId)
+		if(!post) res.send(404, 'Not Found')
+
+		let datauri = new DataUri
+		let image = datauri.format("." + post.image.contentType.split("/").pop(), post.image.data)
+		res.render('post.ejs', {
+			post: post, 
+			verb: 'Edit',
+			image: `data:${post.image.contentType};base64,${image.base64}`
+		})
+	}))
+
+	app.post('/post/:postId?', isLoggedIn,  then (async (req, res) => {
+		let postId = req.params.postId
+		console.log("inside post: " + postId)
+		if(!postId) {
+			let post = new Post()	
+			let [{title: [title], content: [content]}, {image: [file]}] = await new multiparty.Form().promise.parse(req)
+			post.title = title
+			post.content = content
+			post.image.data = await fs.promise.readFile(file.path)
+			post.image.contentType = file.headers['content-type']
+			await post.save()
+			res.redirect('/blog/' + encodeURI(req.user.blogTitle))
+			return
+		}
+
+		let post = await Post.promise.findById(postId)
+		if(!post) res.send(404, 'Not Found')
+
+		post.title = title
+		post.content = content
+		await post.save()
+		res.redirect('/blog/' + encodeURI(req.user.blogTitle))
+	}))
 
 	app.get('/logout', (req, res) => {
 		req.logout()
