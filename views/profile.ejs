@@ -74,6 +74,25 @@
                   <% } %>                
                 <% } %>                
             </div>
+            
+            <div class="col-xs-12 comments-area">
+                    <form action="/comment/<%= posts[i].id %> " method="post">
+                        <div class = "row">
+                            <div class="col-xs-9">
+                                <input type="text" class="form-control" name="text" placeholder="Comment">
+                            </div>
+                            <div class="col-xs-3">
+                                <button type="submit" class="btn btn-warning btn-lg" data-post-id="<%= posts[i].id %>">
+                                    <% if(user) {%>
+                                        Post
+                                    <%} else {%>
+                                        Login &amp; Post
+                                    <%}%>             
+                                </button> 
+                            </div>
+                        </div>
+                    </form>
+                </div>
         <% } %>
     <% } %>
 
