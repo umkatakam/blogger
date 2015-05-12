@@ -25,8 +25,7 @@ app.use(flash())
 app.use(session({
   secret: 'ilovethenodejs',
   resave: true,
-  saveUninitialized: true,
-  cookie: {maxAge : 10000}
+  saveUninitialized: true
 }))
 
 app.use(passport.initialize())

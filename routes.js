@@ -32,7 +32,7 @@ module.exports = (app) => {
 		res.render('profile.ejs', {user: req.user})	
 	})
 
-	app.get('/post/:postId?', then (async (req, res) => {
+	app.get('/post/:postId?', isLoggedIn, then (async (req, res) => {
 		let postId = req.params.postId		
 		if(!postId) {
 			res.render('post.ejs', {
@@ -54,28 +54,26 @@ module.exports = (app) => {
 		})
 	}))
 
-	app.post('/post/:postId?', isLoggedIn,  then (async (req, res) => {
+	app.post('/post/:postId?', isLoggedIn, then (async (req, res) => {
 		let postId = req.params.postId
-		console.log("inside post: " + postId)
+		let [{title: [title], content: [content]}, {image: [file]}] = await new multiparty.Form().promise.parse(req)
 		if(!postId) {
-			let post = new Post()	
-			let [{title: [title], content: [content]}, {image: [file]}] = await new multiparty.Form().promise.parse(req)
+			let post = new Post()				
 			post.title = title
 			post.content = content
 			post.image.data = await fs.promise.readFile(file.path)
 			post.image.contentType = file.headers['content-type']
 			await post.save()
-			res.redirect('/blog/' + encodeURI(req.user.blogTitle))
+			res.redirect(`/blog/${encodeURI(req.user.blogTitle)}`)
 			return
 		}
 
 		let post = await Post.promise.findById(postId)
 		if(!post) res.send(404, 'Not Found')
-
 		post.title = title
 		post.content = content
 		await post.save()
-		res.redirect('/blog/' + encodeURI(req.user.blogTitle))
+		res.redirect(`/blog/${encodeURI(req.user.blogTitle)}`)
 	}))
 
 	app.get('/logout', (req, res) => {
