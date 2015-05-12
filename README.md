@@ -14,13 +14,25 @@ Run `npm start` to start the server.
 
 ### Features
 * User signup with input validation
+![alt tag](https://github.com/umkatakam/blogger/blob/master/images/signup.gif)
+
 * User Login and logout with input validation
+![alt tag](https://github.com/umkatakam/blogger/blob/master/images/login-logout.gif)
+
 * Session and user accounts persisted
+![alt tag](https://github.com/umkatakam/blogger/blob/master/images/session-user.gif)
+
 * Create blog post
+![alt tag](https://github.com/umkatakam/blogger/blob/master/images/create-blog-post.gif)
+
 * Edit blog post
+![alt tag](https://github.com/umkatakam/blogger/blob/master/images/edit-blog-post.gif)
+
 * Profile page
+![alt tag](https://github.com/umkatakam/blogger/blob/master/images/profile-page.gif)
+
 * Blog page
-* Comment on blog posts
+![alt tag](https://github.com/umkatakam/blogger/blob/master/images/blog-page.gif)
 
 #### Required
 
