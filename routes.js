@@ -4,6 +4,9 @@ let DataUri = require('datauri')
 let multiparty = require('multiparty')
 let then = require('express-then')
 let Post = require('./models/post')
+let User = require('./models/user')
+let Comment = require('./models/comment')
+let _ = require('lodash')
 
 require('songbird')
 
@@ -28,9 +31,18 @@ module.exports = (app) => {
 	    failureFlash: true
 	}))
 
-	app.get('/profile', isLoggedIn, (req, res) => {	
-		res.render('profile.ejs', {user: req.user})	
-	})
+	app.get('/profile', isLoggedIn, then (async (req, res) => {	
+		let username = req.user.username
+		let posts = await Post.promise.find({username : username})
+		for (let post of posts) {
+			let comments = await Comment.promise.find({postId : post.id}) || []
+			post.comments = comments
+		}
+		res.render('profile.ejs', {
+			user : req.user,
+			posts : posts
+		})	
+	}))
 
 	app.get('/post/:postId?', isLoggedIn, then (async (req, res) => {
 		let postId = req.params.postId		
@@ -57,23 +69,74 @@ module.exports = (app) => {
 	app.post('/post/:postId?', isLoggedIn, then (async (req, res) => {
 		let postId = req.params.postId
 		let [{title: [title], content: [content]}, {image: [file]}] = await new multiparty.Form().promise.parse(req)
+		let post
 		if(!postId) {
-			let post = new Post()				
-			post.title = title
-			post.content = content
+			post = new Post()							
 			post.image.data = await fs.promise.readFile(file.path)
 			post.image.contentType = file.headers['content-type']
-			await post.save()
-			res.redirect(`/blog/${encodeURI(req.user.blogTitle)}`)
-			return
-		}
-
-		let post = await Post.promise.findById(postId)
-		if(!post) res.send(404, 'Not Found')
+			post.creationDate = new Date()			
+		} else {
+			post = await Post.promise.findById(postId)
+			if(!post) res.send(404, 'Not Found')
+			post.updateDate = new Date()
+		}		
 		post.title = title
 		post.content = content
+		post.username = req.user.username		
 		await post.save()
 		res.redirect(`/blog/${encodeURI(req.user.blogTitle)}`)
+		return
+	}))
+
+	app.post('/delete/post/:postId', isLoggedIn, then (async (req, res) => {
+		let postId = req.params.postId
+		if (postId) {
+			let post = await Post.promise.findById(postId)
+			if (post) {
+				await post.promise.remove()
+				res.redirect('/profile')
+			}
+		}
+	}))
+
+	app.get('/blog/:blogTitle', then (async (req, res) => {
+		let blogTitle = req.params.blogTitle
+		if (blogTitle) {
+			let users = await User.promise.find({blogTitle : blogTitle})
+			if(users) {
+				let posts = []
+				for (let user of users) {
+					let userPosts = await Post.promise.find({username : user.username})
+					posts.push(userPosts)
+				}
+				let userPosts = _.flatten(posts)
+				let datauri = new DataUri
+				for (let userPost of userPosts) {					
+					let image = datauri.format("." + userPost.image.contentType.split("/").pop(), userPost.image.data)
+					userPost.postImage = `data:${userPost.image.contentType};base64,${image.base64}`
+					let comments = await Comment.promise.find({postId : userPost.id})
+					userPost.comments = comments || []
+				}
+				res.render('blog.ejs', {
+					posts : userPosts,
+					user : req.user
+				})
+				return
+			}
+		}
+		res.send(404, 'Not Found')
+	}))
+
+	app.post('/comment/:postId', isLoggedIn, then (async (req, res) => {
+		let postId = req.params.postId
+		let text = req.body.text
+		let comment = new Comment()
+		comment.text = text
+		comment.username = req.user.username
+		comment.postId = postId
+		comment.creationDate = new Date()
+		await comment.promise.save()
+		res.redirect('/profile')
 	}))
 
 	app.get('/logout', (req, res) => {

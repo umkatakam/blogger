@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+    <title>Blogger</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+    <style>
+        body         { padding-top:80px; word-wrap:break-word; }
+        .img-thumb {
+            margin-top: 25px;
+            width: 50px;
+            height: 50px;
+        }
+        .comment {
+            border-bottom: 1px;        
+        }
+        .comments-area {
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="page-header text-center">
+        <h1><span class="fa fa-user"></span> Blog Page</h1>        
+    </div>
+    <div class="row">
+    <h3> Blog posts </h3>
+    <% if (posts.length === 0) { %>
+        <h3> There are no posts for <%= user.username %> </h3> 
+    <% } else{ %>
+        <h3> There are <%= posts.length %> posts </h3>
+        <% for(var i=0; i<posts.length; i++) { %>
+            <div class="row" data-id="<%= posts[i].id%>">  
+                <div class="col-xs-2">    
+                    <img src="<%= posts[i].postImage %>" class="img-thumb"/>    
+                </div>          
+                <div class="col-xs-10">
+                  <h3 class="post-title"><%=posts[i].title%></h3>
+                  <h6><i> Username: <%= posts[i].username%> </i></h6> 
+                  <% if (posts[i].updateDate) { %>                  
+                    <h6><i> Date updated: <%= posts[i].updateDate%> </i></h6>
+                  <% } else { %>
+                    <h6><i> Date created: <%= posts[i].creationDate%> </i></h6>
+                  <% } %>
+                  <h6><i> Content: <%= posts[i].content%> </i></h6> 
+                </div>    
+
+                <div class="col-xs-12">
+                    <h4>Comments</h4>
+                    <% if (posts[i].comments.length === 0) { %>
+                        <h5>No comments</h5>
+                    <% } else { %>
+                      <% for(var j=0; j<posts[i].comments.length; j++) { %>
+                        <div class="comment">
+                          <h6>username: <%= posts[i].comments[j].username%></h6>
+                          <h6>Comment date: <%= posts[i].comments[j].creationDate%></h6>
+                          <p><%= posts[i].comments[j].text%></p>                          
+                        </div>
+                      <% } %>                
+                    <% } %>                
+                </div>
+
+                <div class="col-xs-12 comments-area">
+                    <form action="/comment/<%= posts[i].id %> " method="post">
+                        <div class = "row">
+                            <div class="col-xs-9">
+                                <input type="text" class="form-control" name="text" placeholder="Comment">
+                            </div>
+                            <div class="col-xs-3">
+                                <button type="submit" class="btn btn-warning btn-lg" data-post-id="<%= posts[i].id %>">
+                                    <% if(user) {%>
+                                        Post
+                                    <%} else {%>
+                                        Login &amp; Post
+                                    <%}%>             
+                                </button> 
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <% } %>
+    <% } %>
+
+</div>
+</body>
+</html>

@@ -14,7 +14,14 @@ let PostSchema = mongoose.Schema({
     image : {
         data: Buffer,
         contentType : String
-    }
+    },
+    username: {
+        type: String,
+        required: true
+    },
+    creationDate : Date,
+    updateDate : Date,
+
 })
 
 module.exports = mongoose.model('Post', PostSchema)
